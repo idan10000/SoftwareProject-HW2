@@ -2,7 +2,6 @@ import argparse
 import numpy as np
 import pandas as pd
 import mykmeanssp
-import time
 
 
 def main():
@@ -27,11 +26,6 @@ def main():
     obs = pd.read_csv(f'{args.filename}', header=None)
     initial, ind = k_means_pp(obs, N, K, d)
     print_ind(ind)
-    # print(initial.dtype)
-    # print(initial)
-    # mat = obs.to_numpy()
-    # print(mat)
-    # print('a')
     mykmeanssp.kmeans(MAX_ITER, obs.values.tolist(), initial.tolist())
 
 
@@ -46,12 +40,6 @@ def calc_d(obs, cents, i):
     vec = obs[i, :]
     dist = np.linalg.norm(cents - vec, axis=1)
     return dist.min() ** 2
-
-
-# delete this after
-def calc_test(vec, mat):
-    dist = np.linalg.norm(mat - vec, axis=1)
-    print(dist)
 
 
 def update_dists(obs, D1, m, N):
@@ -73,7 +61,6 @@ def k_means_pp(obs, N, K, d):
     cent = mat[i, :]
     D1 = (np.linalg.norm(mat - cent, axis=1))**2
     for j in range(1, K):
-        cents = initial[:j, :]
         s = sum(D1)
         P = D1 / s
 
