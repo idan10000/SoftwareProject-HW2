@@ -4,12 +4,12 @@
 #include <Python.h>
 
 
-void algorithm(int MAX_ITER, double **obs, double **centroids, int *clusters, double **sums);
+static void algorithm(int MAX_ITER, double **obs, double **centroids, int *clusters, double **sums);
 
 
 long K, N, d;
 
-void kmeans(int MAX_ITER, double **obs, double **centroids) {
+static void kmeans(int MAX_ITER, double **obs, double **centroids) {
     int i;
     double **sums, **cobs, **ccentroids, **csums;
     int *clusters, *cclusters;
@@ -48,12 +48,7 @@ void kmeans(int MAX_ITER, double **obs, double **centroids) {
 
 }
 
-void initObs(double **obs, double **centroids) {
-
-}
-
-
-double norm(double *x, double *cluster) {
+static double norm(double *x, double *cluster) {
     double sum;
     int i;
     sum = 0;
@@ -63,7 +58,7 @@ double norm(double *x, double *cluster) {
     return sum;
 }
 
-int assignCluster(double *x, double **centroids) {
+static int assignCluster(double *x, double **centroids) {
     double sum;
     double tempSum;
     int minCluster;
@@ -81,14 +76,14 @@ int assignCluster(double *x, double **centroids) {
     return minCluster;
 }
 
-void assignAllObservations(double **obs, double **centroids, int *clusters) {
+static void assignAllObservations(double **obs, double **centroids, int *clusters) {
     int i;
     for (i = 0; i < N; ++i) {
         clusters[i] = assignCluster(obs[i], centroids);
     }
 }
 
-void resetSums(double **sums) {
+static void resetSums(double **sums) {
     int i, j;
     for (i = 0; i < K; ++i)
         for (j = 0; j < d; ++j)
@@ -107,7 +102,7 @@ void resetSums(double **sums) {
  * @param d The size of the vector of each observation and centroid
  * @return If any of the centroids were updated
  */
-char updateCentroids(double **obs, double **centroids, int *clusters, double **sums) {
+static char updateCentroids(double **obs, double **centroids, int *clusters, double **sums) {
     int *clusterSizes;
     char changedAny;
     double *tempCentroid;
@@ -139,11 +134,10 @@ char updateCentroids(double **obs, double **centroids, int *clusters, double **s
 }
 
 
-void algorithm(int MAX_ITER, double **obs, double **centroids, int *clusters, double **sums) {
+static void algorithm(int MAX_ITER, double **obs, double **centroids, int *clusters, double **sums) {
     char changedCluster;
     int i, j;
     changedCluster = 1;
-    initObs(obs, centroids);
 
     for (i = 0; i < MAX_ITER && changedCluster; ++i) {
         assignAllObservations(obs, centroids, clusters);
@@ -151,9 +145,9 @@ void algorithm(int MAX_ITER, double **obs, double **centroids, int *clusters, do
     }
     for (i = 0; i < K; ++i) {
         for (j = 0; j < d - 1; ++j) {
-            printf("%.2f%c", centroids[i][j], ',');
+            printf("%f%c", centroids[i][j], ',');
         }
-        printf("%.2f%c", centroids[i][d - 1], '\n');
+        printf("%f%c", centroids[i][d - 1], '\n');
     }
 
 }
@@ -164,7 +158,7 @@ static PyObject* kmeans_capi(PyObject *self, PyObject *args)
     double **obs, **centroids;
     PyObject *obsRow, *centRow, *item, *_lstObs, *_lstCent;
     Py_ssize_t i, j, ln, lk, ld;
-    printf("start init\n");
+
     /* init params from python */
     if(!PyArg_ParseTuple(args, "iOO", &MAX_ITER ,&_lstObs, &_lstCent)) {
         return NULL;
@@ -173,7 +167,6 @@ static PyObject* kmeans_capi(PyObject *self, PyObject *args)
     if (!PyList_Check(_lstObs) || !PyList_Check(_lstCent))
         return NULL;
 
-    printf("start init\n");
 
     N = (long) PyObject_Length(_lstObs);
     K = (long) PyObject_Length(_lstCent);
@@ -196,7 +189,6 @@ static PyObject* kmeans_capi(PyObject *self, PyObject *args)
         centroids[i] = malloc(sizeof(double) * d);
         assert(centroids[i] != NULL);
     }
-        printf("start lists init\n");
 
     /* Go over each item of the list and reduce it */
     for (i = 0; i < lk; i++) {
@@ -207,9 +199,7 @@ static PyObject* kmeans_capi(PyObject *self, PyObject *args)
             obs[i][j] = PyFloat_AsDouble(item);
             item = PyList_GetItem(centRow, j);
             centroids[i][j] = PyFloat_AsDouble(item);
-            printf("%.2f%c", obs[i][j], ',');
         }
-        printf("%.2f%c", obs[i][d - 1], '\n');
     }
 
     for (i = lk; i < ln; i++) {
@@ -219,7 +209,6 @@ static PyObject* kmeans_capi(PyObject *self, PyObject *args)
             obs[i][j] = PyFloat_AsDouble(item);
         }
     }
-
     kmeans(MAX_ITER,obs,centroids);
 
 
